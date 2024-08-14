@@ -29,7 +29,7 @@ public:
 
 // Just comment this define to remove debug output
 //
-#define DBG_OUT
+//#define DBG_OUT
 #include <stdio.h>
 #ifdef DBG_OUT
 #define DBGPRINT(x, ...) printf(x, __VA_ARGS__)
@@ -97,17 +97,36 @@ void __fastcall Slider_ctor(Slider* ecx, void* edx, int arg3)
 	orgSlider_ctor(ecx, edx, arg3);
 }
 
+float remap(int value, int input_min, int input_max, int output_min, int output_max)
+{
+	const long long factor = 1000000000;
+
+	long long output_spread = static_cast<long long>(output_max) - output_min;
+	long long input_spread = static_cast<long long>(input_max) - input_min;
+
+	long long l_value = value;
+
+	long long zero_value = static_cast<long long>(value) - input_min;
+	zero_value *= factor;
+	long long percentage = zero_value / input_spread;
+
+	long long zero_output = percentage * output_spread / factor;
+
+	long long result = output_min + zero_output;
+
+	return result;
+}
+
 // Implement your logic in here
 //
 void callback_valuechange(const char* slider_name, const double slider_value)
 {
 	//dB = 20 log 10 (V2/V1)
-	//	
-	float scaled_value = 20 * log10(slider_value / 100.f);
+	float scaled_value = remap(slider_value, 0, 100, -60, 0);
 
-	if (!strcmp(slider_name, "micSlider"))
+	if (!strcmp(slider_name, "MUSICMixOneSlider"))
 	{
-		vm_interface->set_parameter("Strip[0].gain", scaled_value);
+		vm_interface->set_parameter("Bus[1].gain", scaled_value);
 		DBGPRINT("Slider \"%s\" updated value to %f scaled_value %f\n", slider_name, slider_value, scaled_value);
 	}	
 }
